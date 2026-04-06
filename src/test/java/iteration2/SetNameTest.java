@@ -14,6 +14,7 @@ import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class SetNameTest {
     @BeforeAll
@@ -62,6 +63,18 @@ public class SetNameTest {
                 .extract()
                 .header("Authorization");
 
+        //получаем изначальное имя
+        String initialName = given()
+                .header("Authorization", userAuthHeader)
+                //.contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .get("http://localhost:4111/api/v1/customer/profile")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .extract()
+                .jsonPath().getString("customer.name");
+
         // устанавливаем имя пользователя
         var response = given()
                 .header("Authorization", userAuthHeader)
@@ -84,6 +97,7 @@ public class SetNameTest {
 
         assertEquals(name, nameResult);
         assertEquals("Profile updated successfully", message);
+        assertNotEquals(initialName, nameResult);
 
     }
 
@@ -126,6 +140,18 @@ public class SetNameTest {
                 .extract()
                 .header("Authorization");
 
+        //получаем изначальное имя
+        String initialName = given()
+                .header("Authorization", userAuthHeader)
+                //.contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .get("http://localhost:4111/api/v1/customer/profile")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .extract()
+                .jsonPath().getString("customer.name");
+
         // устанавливаем имя пользователя
         given()
                 .header("Authorization", userAuthHeader)
@@ -140,5 +166,19 @@ public class SetNameTest {
                 .then()
                 .assertThat()
                 .statusCode(HttpStatus.SC_BAD_REQUEST);
+
+        //получаем имя после попытки установить имя
+        String finalName = given()
+                .header("Authorization", userAuthHeader)
+                //.contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .get("http://localhost:4111/api/v1/customer/profile")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .extract()
+                .jsonPath().getString("customer.name");
+
+        assertEquals(initialName, finalName);
     }
 }

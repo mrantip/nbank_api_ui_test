@@ -14,8 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TransferMoneyTest {
     @BeforeAll
@@ -93,7 +92,7 @@ public class TransferMoneyTest {
                 .statusCode(HttpStatus.SC_OK);
 
         // вносим депозит еще раз для достаточной суммы перевода
-        double balance = given()
+        double balance1 = given()
                 .header("Authorization", userAuthHeader)
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
@@ -110,7 +109,7 @@ public class TransferMoneyTest {
                 .extract()
                 .jsonPath().getDouble("balance");
 
-        assertTrue(balance >= 10000.0);
+        assertTrue(balance1 >= 10000.0);
 
         // создаем 2 аккаунт(счет)
         int createdAccount2 = given()
@@ -123,6 +122,18 @@ public class TransferMoneyTest {
                 .statusCode(HttpStatus.SC_CREATED)
                 .extract()
                 .jsonPath().getInt("id");
+
+        //получаем текущий баланс 2 аккаунта
+        double balance2 = given()
+                .header("Authorization", userAuthHeader)
+                .accept(ContentType.JSON)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .extract()
+                .jsonPath()
+                .getDouble("find { it.id == " + createdAccount2 + " }.balance");
 
         // переводим средства с 1 аккаунта на 2
         String messageResult = given()
@@ -144,6 +155,33 @@ public class TransferMoneyTest {
                 .jsonPath().getString("message");
 
         assertEquals("Transfer successful", messageResult);
+
+        //получаем текущий баланс 1 аккаунта
+        double balanceResult = given()
+                .header("Authorization", userAuthHeader)
+                .accept(ContentType.JSON)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .extract()
+                .jsonPath()
+                .getDouble("find { it.id == " + createdAccount1 + " }.balance");
+
+        //получаем текущий баланс 2 аккаунта
+        double balanceResult2 = given()
+                .header("Authorization", userAuthHeader)
+                .accept(ContentType.JSON)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .extract()
+                .jsonPath()
+                .getDouble("find { it.id == " + createdAccount2 + " }.balance");
+
+        assertNotEquals(balance1, balanceResult);
+        assertNotEquals(balance2, balanceResult2);
     }
 
     @ParameterizedTest
@@ -270,7 +308,7 @@ public class TransferMoneyTest {
 
         // создаем аккаунт(счет)
         int createdAccountStranger = given()
-                .header("Authorization", userAuthHeader)
+                .header("Authorization", userAuthHeaderStranger)
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
                 .post("http://localhost:4111/api/v1/accounts")
@@ -279,6 +317,18 @@ public class TransferMoneyTest {
                 .statusCode(HttpStatus.SC_CREATED)
                 .extract()
                 .jsonPath().getInt("id");
+
+        //получаем баланс 2 пользователя
+        Double balanceStranger = given()
+                .header("Authorization", userAuthHeaderStranger)
+                .accept(ContentType.JSON)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .extract()
+                .jsonPath()
+                .getDouble("find { it.id == " + createdAccountStranger + " }.balance");
 
         // переводим средства с 1 аккаунта на 2
         String messageResult = given()
@@ -300,6 +350,33 @@ public class TransferMoneyTest {
                 .jsonPath().getString("message");
 
         assertEquals("Transfer successful", messageResult);
+
+        //получаем текущий баланс 1 пользователя
+        Double balanceResult = given()
+                .header("Authorization", userAuthHeader)
+                .accept(ContentType.JSON)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .extract()
+                .jsonPath()
+                .getDouble("find { it.id == " + createdAccount1 + " }.balance");
+
+        //получаем текущий баланс 2 пользователя
+        Double balanceStrangerResult = given()
+                .header("Authorization", userAuthHeaderStranger)
+                .accept(ContentType.JSON)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .extract()
+                .jsonPath()
+                .getDouble("find { it.id == " + createdAccountStranger + " }.balance");
+
+        assertNotEquals(balance, balanceResult);
+        assertNotEquals(balanceStranger, balanceStrangerResult);
     }
 
     @ParameterizedTest
@@ -416,6 +493,24 @@ public class TransferMoneyTest {
                 .extract()
                 .jsonPath().getInt("id");
 
+        //получаем баланс 2 аккаунта
+        double balance2 = given()
+                .header("Authorization", userAuthHeader)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .body(String.format(""" 
+                         {
+                           "id": %d,
+                           "balance": %s
+                         }
+                        """, createdAccount2, 5000))
+                .post("http://localhost:4111/api/v1/accounts/deposit")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .extract()
+                .jsonPath().getDouble("balance");
+
         // переводим средства с 1 аккаунта на 2
         given()
                 .headers("Authorization", userAuthHeader)
@@ -432,6 +527,34 @@ public class TransferMoneyTest {
                 .then()
                 .assertThat()
                 .statusCode(HttpStatus.SC_BAD_REQUEST);
+
+        //получаем текущий баланс 1 аккаунта
+        Double balanceResult = given()
+                .header("Authorization", userAuthHeader)
+                .accept(ContentType.JSON)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .extract()
+                .jsonPath()
+                .getDouble("find { it.id == " + createdAccount1 + " }.balance");
+
+        //получаем текущий баланс 2 аккаунта
+        Double balanceResult2 = given()
+                .header("Authorization", userAuthHeader)
+                .accept(ContentType.JSON)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .extract()
+                .jsonPath()
+                .getDouble("find { it.id == " + createdAccount2 + " }.balance");
+
+
+        assertEquals(balance, balanceResult);
+        assertEquals(balance2, balanceResult2);
     }
 
     @ParameterizedTest
@@ -573,7 +696,7 @@ public class TransferMoneyTest {
 
         // создаем аккаунт(счет)
         int createdAccountStranger = given()
-                .header("Authorization", userAuthHeader)
+                .header("Authorization", userAuthHeaderStranger)
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
                 .post("http://localhost:4111/api/v1/accounts")
@@ -582,6 +705,19 @@ public class TransferMoneyTest {
                 .statusCode(HttpStatus.SC_CREATED)
                 .extract()
                 .jsonPath().getInt("id");
+
+        //получаем текущий баланс 2 пользователя
+        Double balance2 = given()
+                .header("Authorization", userAuthHeaderStranger)
+                .accept(ContentType.JSON)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .extract()
+                .jsonPath()
+                .getDouble("find { it.id == " + createdAccountStranger + " }.balance");
+
 
         // переводим средства с 1 аккаунта на 2
         given()
@@ -599,6 +735,33 @@ public class TransferMoneyTest {
                 .then()
                 .assertThat()
                 .statusCode(HttpStatus.SC_BAD_REQUEST);
+
+        //получаем текущий баланс
+        Double balanceResult = given()
+                .header("Authorization", userAuthHeader)
+                .accept(ContentType.JSON)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .extract()
+                .jsonPath()
+                .getDouble("find { it.id == " + createdAccount1 + " }.balance");
+
+        //получаем текущий баланс 2 пользователя
+        Double balanceResult2 = given()
+                .header("Authorization", userAuthHeaderStranger)
+                .accept(ContentType.JSON)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .extract()
+                .jsonPath()
+                .getDouble("find { it.id == " + createdAccountStranger + " }.balance");
+
+        assertEquals(balance, balanceResult);
+        assertEquals(balance2, balanceResult2);
     }
 
     @Test
@@ -683,6 +846,18 @@ public class TransferMoneyTest {
                 .extract()
                 .jsonPath().getInt("id");
 
+        //получаем текущий баланс 2 frrfeynf
+        Double balance2 = given()
+                .header("Authorization", userAuthHeader)
+                .accept(ContentType.JSON)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .extract()
+                .jsonPath()
+                .getDouble("find { it.id == " + createdAccount2 + " }.balance");
+
         // переводим средства с 1 аккаунта на 2
         given()
                 .headers("Authorization", userAuthHeader)
@@ -699,5 +874,32 @@ public class TransferMoneyTest {
                 .then()
                 .assertThat()
                 .statusCode(HttpStatus.SC_BAD_REQUEST);
+
+        //получаем текущий баланс
+        Double balanceResult = given()
+                .header("Authorization", userAuthHeader)
+                .accept(ContentType.JSON)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .extract()
+                .jsonPath()
+                .getDouble("find { it.id == " + createdAccount1 + " }.balance");
+
+        //получаем текущий баланс 2 frrfeynf
+        Double balanceResult2 = given()
+                .header("Authorization", userAuthHeader)
+                .accept(ContentType.JSON)
+                .get("http://localhost:4111/api/v1/customer/accounts")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .extract()
+                .jsonPath()
+                .getDouble("find { it.id == " + createdAccount2 + " }.balance");
+
+        assertEquals(balance, balanceResult);
+        assertEquals(balance2, balanceResult2);
     }
 }

@@ -109,6 +109,27 @@ Authorization: Basic c2Vyb3phOlNlcm96YTEj
   "balance": 5000
 }
 
+### Внести депозит на чужой аккаунт!!!!!!
+GET http://localhost:4111/api/v1/accounts/1/transactions
+Content-Type: application/json
+Authorization: Basic c2Vyb3phOlNlcm96YTEj
+
+{}
+
+
+### Внести депозит на чужой аккаунт!!!!!!
+GET http://localhost:4111/api/v1/customer/profile
+Content-Type: application/json
+Authorization: Basic c2Vyb3phOlNlcm96YTEj
+
+{}
+
+### Внести депозит на чужой аккаунт!!!!!!
+GET http://localhost:4111/api/v1/customer/accounts
+Content-Type: application/json
+Authorization: Basic c2Vyb3phOlNlcm96YTEj
+
+{}
 
 ### Внести депозит на несуществующий аккаунт
 POST http://localhost:4111/api/v1/accounts/deposit

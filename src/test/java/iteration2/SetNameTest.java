@@ -64,7 +64,7 @@ public class SetNameTest {
 
         ProfileInfoResponse profileInfoResponse = new ProfileInfoRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
                 ResponseSpecs.requestReturnsOK())
-                .post(null)
+                .post()
                 .extract().as(ProfileInfoResponse.class);
 
         assertEquals(initialName, profileInfoResponse.getName());

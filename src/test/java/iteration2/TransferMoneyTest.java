@@ -31,7 +31,7 @@ public class TransferMoneyTest extends BaseTest {
 
         CreateAccountResponse createdAccount = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract().as(CreateAccountResponse.class);
 
         long createdAccountId = createdAccount.getId();
@@ -54,7 +54,7 @@ public class TransferMoneyTest extends BaseTest {
 
         CreateAccountResponse createdAccount2 = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract().as(CreateAccountResponse.class);
 
         double initialBalance2 = createdAccount2.getBalance();
@@ -109,7 +109,7 @@ public class TransferMoneyTest extends BaseTest {
 
         CreateAccountResponse createdAccount = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract().as(CreateAccountResponse.class);
 
         long createdAccountId = createdAccount.getId();
@@ -143,7 +143,7 @@ public class TransferMoneyTest extends BaseTest {
 
         CreateAccountResponse createdAccount2 = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest2.getUsername(), userRequest2.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract().as(CreateAccountResponse.class);
 
         double initialBalance2 = createdAccount2.getBalance();
@@ -205,7 +205,7 @@ public class TransferMoneyTest extends BaseTest {
 
         CreateAccountResponse createdAccount = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract().as(CreateAccountResponse.class);
 
         long createdAccountId = createdAccount.getId();
@@ -228,7 +228,7 @@ public class TransferMoneyTest extends BaseTest {
 
         CreateAccountResponse createdAccount2 = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract().as(CreateAccountResponse.class);
 
         double initialBalance2 = createdAccount2.getBalance();
@@ -281,7 +281,7 @@ public class TransferMoneyTest extends BaseTest {
 
         CreateAccountResponse createdAccount = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract().as(CreateAccountResponse.class);
 
         long createdAccountId = createdAccount.getId();
@@ -315,7 +315,7 @@ public class TransferMoneyTest extends BaseTest {
 
         CreateAccountResponse createdAccount2 = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest2.getUsername(), userRequest2.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract().as(CreateAccountResponse.class);
 
         double initialBalance2 = createdAccount2.getBalance();
@@ -374,7 +374,7 @@ public class TransferMoneyTest extends BaseTest {
 
         CreateAccountResponse createdAccount = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract().as(CreateAccountResponse.class);
 
         long createdAccountId = createdAccount.getId();
@@ -393,7 +393,7 @@ public class TransferMoneyTest extends BaseTest {
 
         CreateAccountResponse createdAccount2 = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract().as(CreateAccountResponse.class);
 
         double initialBalance2 = createdAccount2.getBalance();

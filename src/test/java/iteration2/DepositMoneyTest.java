@@ -35,7 +35,7 @@ public class DepositMoneyTest extends BaseTest {
 
         CreateAccountResponse createdAccount = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract().as(CreateAccountResponse.class);
 
         long createdAccountId = createdAccount.getId();
@@ -71,7 +71,7 @@ public class DepositMoneyTest extends BaseTest {
 
         CreateAccountResponse createdAccount = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract().as(CreateAccountResponse.class);
 
         long createdAccountId = createdAccount.getId();
@@ -115,7 +115,7 @@ public class DepositMoneyTest extends BaseTest {
 
         CreateAccountResponse createdAccount = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract().as(CreateAccountResponse.class);
 
         double initialBalance = createdAccount.getBalance();

@@ -21,4 +21,13 @@ public class ProfileInfoRequester extends Request{
                 .assertThat()
                 .spec(responseSpecification);
     }
+
+    public ValidatableResponse post() {
+        return given()
+                .spec(requestSpecification)
+                .get("/api/v1/customer/profile")
+                .then()
+                .assertThat()
+                .spec(responseSpecification);
+    }
 }

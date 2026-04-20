@@ -32,7 +32,7 @@ public class CreateAccountTest extends BaseTest {
 
         CreateAccountResponse createdAccount = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
                 ResponseSpecs.entityWasCreated())
-                .post(null)
+                .post()
                 .extract().as(CreateAccountResponse.class);
 
         // запросить все аккаунты пользователя и проверить, что наш аккаунт там

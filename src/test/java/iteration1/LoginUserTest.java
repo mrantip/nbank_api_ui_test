@@ -1,6 +1,7 @@
 package iteration1;
 
 import base.BaseTest;
+import configs.Config;
 import generators.RandomData;
 import models.CreateUserRequest;
 import models.LoginUserRequest;
@@ -17,9 +18,12 @@ public class LoginUserTest extends BaseTest {
 
     @Test
     public void adminCanGenerateAuthTokenTest() {
+        String username = Config.getUsername();
+        String password = Config.getPassword();
+
         LoginUserRequest userRequest = LoginUserRequest.builder()
-                .username("admin")
-                .password("admin")
+                .username(username)
+                .password(password)
                 .build();
 
         new LoginUserRequester(RequestSpecs.unauthSpec(),

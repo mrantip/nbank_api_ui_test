@@ -1,20 +1,15 @@
 package iteration2;
 
 import base.BaseTest;
-import generators.RandomData;
 import models.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import requests.AdminCreateUserRequester;
-import requests.CreateAccountRequester;
-import requests.DepositRequester;
-import requests.ReceiveAllUserAccountRequester;
+import requests.steps.AdminSteps;
+import requests.steps.usersteps.UserStepsDeposit;
 import specs.RequestSpecs;
-import specs.ResponseSpecs;
 
-import java.util.List;
-
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class DepositMoneyTest extends BaseTest {
@@ -22,125 +17,51 @@ public class DepositMoneyTest extends BaseTest {
     @ParameterizedTest
     @ValueSource(doubles = {5000.0, 4999.99, 0.01})
     public void depositValidSumTest(double deposit) {
-        CreateUserRequest userRequest = CreateUserRequest.builder()
-                .username(RandomData.getUsername())
-                .password(RandomData.getPassword())
-                .role(UserRole.USER.toString())
-                .build();
+        CreateUserRequest userRequest = AdminSteps.createUser();
+        UserStepsDeposit userSteps = new UserStepsDeposit(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()));
 
-        new AdminCreateUserRequester(
-                RequestSpecs.adminSpec(),
-                ResponseSpecs.entityWasCreated())
-                .post(userRequest);
+        CreateAccountResponse createdAccount = userSteps.createAccount();
 
-        CreateAccountResponse createdAccount = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.entityWasCreated())
-                .post()
-                .extract().as(CreateAccountResponse.class);
+        DepositResponse depositResponse = userSteps.deposit(createdAccount.getAccountNumber(), deposit);
 
-        long createdAccountId = createdAccount.getId();
-        double initialBalance = createdAccount.getBalance();
-
-        DepositRequest depositRequest = DepositRequest.builder()
-                .id(createdAccountId)
-                .balance(deposit)
-                .build();
-
-        DepositResponse depositResponse = new DepositRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(depositRequest)
-                .extract().as(DepositResponse.class);
-
-        assertNotEquals(initialBalance, depositResponse.getBalance());
+        assertNotEquals(createdAccount.getBalance(), depositResponse.getBalance());
         assertEquals(deposit, depositResponse.getBalance());
     }
+
 
     @ParameterizedTest
     @ValueSource(doubles = {5000.01, 0, -0.01, 1.01124342})
     public void depositInvalidSumTest(double deposit) {
-        CreateUserRequest userRequest = CreateUserRequest.builder()
-                .username(RandomData.getUsername())
-                .password(RandomData.getPassword())
-                .role(UserRole.USER.toString())
-                .build();
+        CreateUserRequest userRequest = AdminSteps.createUser();
+        UserStepsDeposit userSteps = new UserStepsDeposit(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()));
 
-        new AdminCreateUserRequester(
-                RequestSpecs.adminSpec(),
-                ResponseSpecs.entityWasCreated())
-                .post(userRequest);
+        CreateAccountResponse createdAccount = userSteps.createAccount();
 
-        CreateAccountResponse createdAccount = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.entityWasCreated())
-                .post()
-                .extract().as(CreateAccountResponse.class);
+        userSteps.depositInvalidAmount(createdAccount.getAccountNumber(), deposit);
 
-        long createdAccountId = createdAccount.getId();
-        double initialBalance = createdAccount.getBalance();
+        AccountModel foundAccount = userSteps.getAccountByNumber(createdAccount.getAccountNumber());
 
-        DepositRequest depositRequest = DepositRequest.builder()
-                .id(createdAccountId)
-                .balance(deposit)
-                .build();
-
-        new DepositRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsBadRequest())
-                .post(depositRequest);
-
-        List<AccountModel> accounts = new ReceiveAllUserAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(null)
-                .extract()
-                .jsonPath()
-                .getList(".", AccountModel.class);
-
-        AccountModel account = accounts.stream()
-                .filter(a -> a.getId() == createdAccountId)
-                .findFirst()
-                .orElse(null);
-        assertEquals(initialBalance, account.getBalance());
+        assertThat(foundAccount.getBalance()).isEqualTo(createdAccount.getBalance());
     }
 
     @Test
-    public void depositWrongAccountTest() {
-        CreateUserRequest userRequest = CreateUserRequest.builder()
-                .username(RandomData.getUsername())
-                .password(RandomData.getPassword())
-                .role(UserRole.USER.toString())
-                .build();
+    public void depositToStrangerAccountTest() {
+        CreateUserRequest userRequest = AdminSteps.createUser();
+        UserStepsDeposit userSteps = new UserStepsDeposit(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()));
 
-        new AdminCreateUserRequester(
-                RequestSpecs.adminSpec(),
-                ResponseSpecs.entityWasCreated())
-                .post(userRequest);
+        CreateAccountResponse createdAccount = userSteps.createAccount();
 
-        CreateAccountResponse createdAccount = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.entityWasCreated())
-                .post()
-                .extract().as(CreateAccountResponse.class);
+        CreateUserRequest userRequestStranger = AdminSteps.createUser();
+        UserStepsDeposit userStepsStranger = new UserStepsDeposit(RequestSpecs.authAsUser(userRequestStranger.getUsername(), userRequestStranger.getPassword()));
 
-        double initialBalance = createdAccount.getBalance();
-        long createdAccountId = createdAccount.getId();
+        CreateAccountResponse createdAccountStranger = userStepsStranger.createAccount();
 
-        DepositRequest depositRequest = DepositRequest.builder()
-                .id(1234524567)
-                .balance(100)
-                .build();
+        userSteps.depositToStrangerAccount(createdAccountStranger.getId());
 
-        new DepositRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsUnauthorized())
-                .post(depositRequest);
+        AccountModel foundAccount = userSteps.getAccountByNumber(createdAccount.getAccountNumber());
+        AccountModel foundAccountStranger = userStepsStranger.getAccountByNumber(createdAccountStranger.getAccountNumber());
 
-        List<AccountModel> accounts = new ReceiveAllUserAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(null)
-                .extract()
-                .jsonPath()
-                .getList(".", AccountModel.class);
-
-        AccountModel account = accounts.stream()
-                .filter(a -> a.getId() == createdAccountId)
-                .findFirst()
-                .orElse(null);
-        assertEquals(initialBalance, account.getBalance());
+        assertThat(foundAccount.getBalance()).isEqualTo(createdAccount.getBalance());
+        assertThat(foundAccountStranger.getBalance()).isEqualTo(createdAccountStranger.getBalance());
     }
 }

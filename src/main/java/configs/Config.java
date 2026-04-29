@@ -24,10 +24,10 @@ public class Config {
     }
 
     public static String getUsername() {
-        return INSTANCE.properties.getProperty("username");
+        return INSTANCE.properties.getProperty("admin.username");
     }
 
     public static String getPassword() {
-        return INSTANCE.properties.getProperty("password");
+        return INSTANCE.properties.getProperty("admin.password");
     }
 }

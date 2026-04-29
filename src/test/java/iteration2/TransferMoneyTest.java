@@ -1,432 +1,129 @@
 package iteration2;
 
 import base.BaseTest;
-import generators.RandomData;
 import models.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import requests.*;
+import requests.steps.AdminSteps;
+import requests.steps.usersteps.UserSteps;
+import requests.steps.usersteps.UserStepsDeposit;
+import requests.steps.usersteps.UserStepsTransfer;
 import specs.RequestSpecs;
-import specs.ResponseSpecs;
 
-import java.util.List;
+import static org.assertj.core.api.Assertions.assertThat;
 
 
 public class TransferMoneyTest extends BaseTest {
 
     @ParameterizedTest
     @ValueSource(doubles = {10000, 9999.99, 0.01, 500})
-    public void transferValidSumToOwnAccountTest1(double transferSum) {
-        CreateUserRequest userRequest = CreateUserRequest.builder()
-                .username(RandomData.getUsername())
-                .password(RandomData.getPassword())
-                .role(UserRole.USER.toString())
-                .build();
+    public void transferValidSumToOwnAccountTest(double transferSum) {
+        CreateUserRequest userRequest = AdminSteps.createUser();
+        UserStepsDeposit userSteps = new UserStepsDeposit(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()));
+        UserStepsTransfer userStepsTransfer = new UserStepsTransfer(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()));
 
-        new AdminCreateUserRequester(
-                RequestSpecs.adminSpec(),
-                ResponseSpecs.entityWasCreated())
-                .post(userRequest);
+        CreateAccountResponse createdAccountFirst = userSteps.createAccount();
+        CreateAccountResponse createdAccountSecond = userSteps.createAccount();
+        userSteps.depositMaxMultipleTimes(createdAccountFirst.getAccountNumber(), 3);
 
-        CreateAccountResponse createdAccount = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.entityWasCreated())
-                .post()
-                .extract().as(CreateAccountResponse.class);
+        double currentBalanceFirst = userSteps.getAccountByNumber(createdAccountFirst.getAccountNumber()).getBalance();
+        double currentBalanceSecond = userSteps.getAccountByNumber(createdAccountSecond.getAccountNumber()).getBalance();
 
-        long createdAccountId = createdAccount.getId();
+        TransferResponse transferResponse = userStepsTransfer.transfer(createdAccountFirst.getId(), createdAccountSecond.getId(), transferSum);
 
-        DepositRequest depositRequest = DepositRequest.builder()
-                .id(createdAccountId)
-                .balance(5000)
-                .build();
-
-        new DepositRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(depositRequest);
-
-        DepositResponse depositResponse = new DepositRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(depositRequest)
-                .extract().as(DepositResponse.class);
-
-        double initialBalance = depositResponse.getBalance();
-
-        CreateAccountResponse createdAccount2 = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.entityWasCreated())
-                .post()
-                .extract().as(CreateAccountResponse.class);
-
-        double initialBalance2 = createdAccount2.getBalance();
-        long createdAccountId2 = createdAccount2.getId();
-
-        TransferRequest transferRequest = TransferRequest.builder()
-                .senderAccountId(createdAccountId)
-                .receiverAccountId(createdAccountId2)
-                .amount(transferSum)
-                .build();
-
-        TransferResponse transferResponse = new TransferRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(transferRequest)
-                .extract().as(TransferResponse.class);
-
-        List<AccountModel> accounts = new ReceiveAllUserAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(null)
-                .extract()
-                .jsonPath()
-                .getList(".", AccountModel.class);
-
-        AccountModel account1 = accounts.stream()
-                .filter(a -> a.getId() == createdAccountId)
-                .findFirst()
-                .orElse(null);
-
-        AccountModel account2 = accounts.stream()
-                .filter(a -> a.getId() == createdAccountId2)
-                .findFirst()
-                .orElse(null);
-
-        softly.assertThat(transferResponse.getMessage()).isEqualTo("Transfer successful");
-        softly.assertThat(initialBalance).isNotEqualTo(account1.getBalance());
-        softly.assertThat(initialBalance2).isNotEqualTo(account2.getBalance());
+        assertThat(transferSum).isEqualTo(transferResponse.getAmount());
+        assertThat(currentBalanceFirst).isNotEqualTo(userSteps.getAccountByNumber(createdAccountFirst.getAccountNumber()).getBalance());
+        assertThat(currentBalanceSecond).isNotEqualTo(userSteps.getAccountByNumber(createdAccountSecond.getAccountNumber()).getBalance());
     }
+
 
     @ParameterizedTest
     @ValueSource(doubles = {10000, 9999.99, 0.01, 500})
     public void transferValidSumToStrangersAccountTest(double transferSum) {
-        CreateUserRequest userRequest = CreateUserRequest.builder()
-                .username(RandomData.getUsername())
-                .password(RandomData.getPassword())
-                .role(UserRole.USER.toString())
-                .build();
+        CreateUserRequest userRequest = AdminSteps.createUser();
+        UserStepsDeposit userSteps = new UserStepsDeposit(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()));
+        UserStepsTransfer userStepsTransfer = new UserStepsTransfer(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()));
 
-        new AdminCreateUserRequester(
-                RequestSpecs.adminSpec(),
-                ResponseSpecs.entityWasCreated())
-                .post(userRequest);
+        CreateAccountResponse createdAccountFirst = userSteps.createAccount();
+        userSteps.depositMaxMultipleTimes(createdAccountFirst.getAccountNumber(), 3);
 
-        CreateAccountResponse createdAccount = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.entityWasCreated())
-                .post()
-                .extract().as(CreateAccountResponse.class);
+        double currentBalance = userSteps.getAccountByNumber(createdAccountFirst.getAccountNumber()).getBalance();
 
-        long createdAccountId = createdAccount.getId();
+        CreateUserRequest userRequestStranger = AdminSteps.createUser();
+        UserSteps userStepsStranger = new UserSteps(RequestSpecs.authAsUser(userRequestStranger.getUsername(), userRequestStranger.getPassword()));
 
-        DepositRequest depositRequest = DepositRequest.builder()
-                .id(createdAccountId)
-                .balance(5000)
-                .build();
+        CreateAccountResponse createdAccountStranger = userStepsStranger.createAccount();
+        double currentBalanceStranger = userStepsStranger.getAccountByNumber(createdAccountStranger.getAccountNumber()).getBalance();
 
-        new DepositRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(depositRequest);
+        TransferResponse transferResponse = userStepsTransfer.transfer(createdAccountFirst.getId(), createdAccountStranger.getId(), transferSum);
 
-        DepositResponse depositResponse = new DepositRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(depositRequest)
-                .extract().as(DepositResponse.class);
-
-        double initialBalance = depositResponse.getBalance();
-
-        CreateUserRequest userRequest2 = CreateUserRequest.builder()
-                .username(RandomData.getUsername())
-                .password(RandomData.getPassword())
-                .role(UserRole.USER.toString())
-                .build();
-
-        new AdminCreateUserRequester(
-                RequestSpecs.adminSpec(),
-                ResponseSpecs.entityWasCreated())
-                .post(userRequest2);
-
-        CreateAccountResponse createdAccount2 = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest2.getUsername(), userRequest2.getPassword()),
-                ResponseSpecs.entityWasCreated())
-                .post()
-                .extract().as(CreateAccountResponse.class);
-
-        double initialBalance2 = createdAccount2.getBalance();
-        long createdAccountId2 = createdAccount2.getId();
-
-        TransferRequest transferRequest = TransferRequest.builder()
-                .senderAccountId(createdAccountId)
-                .receiverAccountId(createdAccountId2)
-                .amount(transferSum)
-                .build();
-
-        TransferResponse transferResponse = new TransferRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(transferRequest)
-                .extract().as(TransferResponse.class);
-
-        List<AccountModel> accounts = new ReceiveAllUserAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(null)
-                .extract()
-                .jsonPath()
-                .getList(".", AccountModel.class);
-
-        AccountModel account1 = accounts.stream()
-                .filter(a -> a.getId() == createdAccountId)
-                .findFirst()
-                .orElse(null);
-
-        List<AccountModel> accounts2 = new ReceiveAllUserAccountRequester(RequestSpecs.authAsUser(userRequest2.getUsername(), userRequest2.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(null)
-                .extract()
-                .jsonPath()
-                .getList(".", AccountModel.class);
-
-        AccountModel account2 = accounts2.stream()
-                .filter(a -> a.getId() == createdAccountId2)
-                .findFirst()
-                .orElse(null);
-
-        softly.assertThat(transferResponse.getMessage()).isEqualTo("Transfer successful");
-        softly.assertThat(initialBalance).isNotEqualTo(account1.getBalance());
-        softly.assertThat(initialBalance2).isNotEqualTo(account2.getBalance());
+        assertThat(transferSum).isEqualTo(transferResponse.getAmount());
+        assertThat(currentBalance).isNotEqualTo(userSteps.getAccountByNumber(createdAccountFirst.getAccountNumber()).getBalance());
+        assertThat(currentBalanceStranger).isNotEqualTo(userStepsStranger.getAccountByNumber(createdAccountStranger.getAccountNumber()).getBalance());
     }
 
     @ParameterizedTest
     @ValueSource(doubles = {0, -0.01, 10000.01})
     public void transferInvalidSumToOwnAccountTest(double transferSum) {
-        CreateUserRequest userRequest = CreateUserRequest.builder()
-                .username(RandomData.getUsername())
-                .password(RandomData.getPassword())
-                .role(UserRole.USER.toString())
-                .build();
+        CreateUserRequest userRequest = AdminSteps.createUser();
+        UserStepsDeposit userSteps = new UserStepsDeposit(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()));
+        UserStepsTransfer userStepsTransfer = new UserStepsTransfer(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()));
 
-        new AdminCreateUserRequester(
-                RequestSpecs.adminSpec(),
-                ResponseSpecs.entityWasCreated())
-                .post(userRequest);
+        CreateAccountResponse createdAccountFirst = userSteps.createAccount();
+        CreateAccountResponse createdAccountSecond = userSteps.createAccount();
+        userSteps.depositMaxMultipleTimes(createdAccountFirst.getAccountNumber(), 3);
 
-        CreateAccountResponse createdAccount = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.entityWasCreated())
-                .post()
-                .extract().as(CreateAccountResponse.class);
+        double currentBalanceFirst = userSteps.getAccountByNumber(createdAccountFirst.getAccountNumber()).getBalance();
+        double currentBalanceSecond = userSteps.getAccountByNumber(createdAccountSecond.getAccountNumber()).getBalance();
 
-        long createdAccountId = createdAccount.getId();
+        userStepsTransfer.transferInvalidAmount(createdAccountFirst.getId(), createdAccountSecond.getId(), transferSum);
 
-        DepositRequest depositRequest = DepositRequest.builder()
-                .id(createdAccountId)
-                .balance(5000)
-                .build();
-
-        new DepositRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(depositRequest);
-
-        DepositResponse depositResponse = new DepositRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(depositRequest)
-                .extract().as(DepositResponse.class);
-
-        double initialBalance = depositResponse.getBalance();
-
-        CreateAccountResponse createdAccount2 = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.entityWasCreated())
-                .post()
-                .extract().as(CreateAccountResponse.class);
-
-        double initialBalance2 = createdAccount2.getBalance();
-        long createdAccountId2 = createdAccount2.getId();
-
-        TransferRequest transferRequest = TransferRequest.builder()
-                .senderAccountId(createdAccountId)
-                .receiverAccountId(createdAccountId2)
-                .amount(transferSum)
-                .build();
-
-        new TransferRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsBadRequest())
-                .post(transferRequest);
-
-        List<AccountModel> accounts = new ReceiveAllUserAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(null)
-                .extract()
-                .jsonPath()
-                .getList(".", AccountModel.class);
-
-        AccountModel account1 = accounts.stream()
-                .filter(a -> a.getId() == createdAccountId)
-                .findFirst()
-                .orElse(null);
-
-        AccountModel account2 = accounts.stream()
-                .filter(a -> a.getId() == createdAccountId2)
-                .findFirst()
-                .orElse(null);
-
-        softly.assertThat(initialBalance).isEqualTo(account1.getBalance());
-        softly.assertThat(initialBalance2).isEqualTo(account2.getBalance());
-    }
-
-    @ParameterizedTest
-    @ValueSource(doubles = {0, -0.01, 10000.01})
-    public void transferInvalidSumToStrangersAccountTest(double transferSum) {
-        CreateUserRequest userRequest = CreateUserRequest.builder()
-                .username(RandomData.getUsername())
-                .password(RandomData.getPassword())
-                .role(UserRole.USER.toString())
-                .build();
-
-        new AdminCreateUserRequester(
-                RequestSpecs.adminSpec(),
-                ResponseSpecs.entityWasCreated())
-                .post(userRequest);
-
-        CreateAccountResponse createdAccount = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.entityWasCreated())
-                .post()
-                .extract().as(CreateAccountResponse.class);
-
-        long createdAccountId = createdAccount.getId();
-
-        DepositRequest depositRequest = DepositRequest.builder()
-                .id(createdAccountId)
-                .balance(5000)
-                .build();
-
-        new DepositRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(depositRequest);
-
-        DepositResponse depositResponse = new DepositRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(depositRequest)
-                .extract().as(DepositResponse.class);
-
-        double initialBalance = depositResponse.getBalance();
-
-        CreateUserRequest userRequest2 = CreateUserRequest.builder()
-                .username(RandomData.getUsername())
-                .password(RandomData.getPassword())
-                .role(UserRole.USER.toString())
-                .build();
-
-        new AdminCreateUserRequester(
-                RequestSpecs.adminSpec(),
-                ResponseSpecs.entityWasCreated())
-                .post(userRequest2);
-
-        CreateAccountResponse createdAccount2 = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest2.getUsername(), userRequest2.getPassword()),
-                ResponseSpecs.entityWasCreated())
-                .post()
-                .extract().as(CreateAccountResponse.class);
-
-        double initialBalance2 = createdAccount2.getBalance();
-        long createdAccountId2 = createdAccount2.getId();
-
-        TransferRequest transferRequest = TransferRequest.builder()
-                .senderAccountId(createdAccountId)
-                .receiverAccountId(createdAccountId2)
-                .amount(0)
-                .build();
-
-        new TransferRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsBadRequest())
-                .post(transferRequest);
-
-        List<AccountModel> accounts = new ReceiveAllUserAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(null)
-                .extract()
-                .jsonPath()
-                .getList(".", AccountModel.class);
-
-        AccountModel account1 = accounts.stream()
-                .filter(a -> a.getId() == createdAccountId)
-                .findFirst()
-                .orElse(null);
-
-        List<AccountModel> accounts2 = new ReceiveAllUserAccountRequester(RequestSpecs.authAsUser(userRequest2.getUsername(), userRequest2.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(null)
-                .extract()
-                .jsonPath()
-                .getList(".", AccountModel.class);
-
-        AccountModel account2 = accounts2.stream()
-                .filter(a -> a.getId() == createdAccountId2)
-                .findFirst()
-                .orElse(null);
-
-        softly.assertThat(initialBalance).isEqualTo(account1.getBalance());
-        softly.assertThat(initialBalance2).isEqualTo(account2.getBalance());
+        assertThat(currentBalanceFirst).isEqualTo(userSteps.getAccountByNumber(createdAccountFirst.getAccountNumber()).getBalance());
+        assertThat(currentBalanceSecond).isEqualTo(userSteps.getAccountByNumber(createdAccountSecond.getAccountNumber()).getBalance());
     }
 
     @Test
-    public void transferSumHigherThanBalanceTest() {
-        CreateUserRequest userRequest = CreateUserRequest.builder()
-                .username(RandomData.getUsername())
-                .password(RandomData.getPassword())
-                .role(UserRole.USER.toString())
-                .build();
+    public void transferInvalidSumToStrangersAccountTest() {
+        CreateUserRequest userRequest = AdminSteps.createUser();
+        UserStepsDeposit userSteps = new UserStepsDeposit(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()));
+        UserStepsTransfer userStepsTransfer = new UserStepsTransfer(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()));
 
-        new AdminCreateUserRequester(
-                RequestSpecs.adminSpec(),
-                ResponseSpecs.entityWasCreated())
-                .post(userRequest);
+        CreateAccountResponse createdAccountFirst = userSteps.createAccount();
+        userSteps.depositMaxMultipleTimes(createdAccountFirst.getAccountNumber(), 3);
 
-        CreateAccountResponse createdAccount = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.entityWasCreated())
-                .post()
-                .extract().as(CreateAccountResponse.class);
+        double currentBalance = userSteps.getAccountByNumber(createdAccountFirst.getAccountNumber()).getBalance();
 
-        long createdAccountId = createdAccount.getId();
+        CreateUserRequest userRequestStranger = AdminSteps.createUser();
+        UserSteps userStepsStranger = new UserSteps(RequestSpecs.authAsUser(userRequestStranger.getUsername(), userRequestStranger.getPassword()));
 
-        DepositRequest depositRequest = DepositRequest.builder()
-                .id(createdAccountId)
-                .balance(5000)
-                .build();
+        CreateAccountResponse createdAccountStranger = userStepsStranger.createAccount();
+        double currentBalanceStranger = userStepsStranger.getAccountByNumber(createdAccountStranger.getAccountNumber()).getBalance();
 
-        DepositResponse depositResponse = new DepositRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(depositRequest)
-                .extract().as(DepositResponse.class);
+        userStepsTransfer.transferInvalidAmount(createdAccountFirst.getId(), createdAccountStranger.getId(), 0);
 
-        double initialBalance = depositResponse.getBalance();
+        assertThat(currentBalance).isEqualTo(userSteps.getAccountByNumber(createdAccountFirst.getAccountNumber()).getBalance());
+        assertThat(currentBalanceStranger).isEqualTo(userStepsStranger.getAccountByNumber(createdAccountStranger.getAccountNumber()).getBalance());
+    }
 
-        CreateAccountResponse createdAccount2 = new CreateAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.entityWasCreated())
-                .post()
-                .extract().as(CreateAccountResponse.class);
+    @ParameterizedTest
+    @ValueSource(doubles = {5000.01, 10000})
+    public void transferInsufficientSumTest(double transferSum) {
+        CreateUserRequest userRequest = AdminSteps.createUser();
+        UserStepsDeposit userSteps = new UserStepsDeposit(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()));
+        UserStepsTransfer userStepsTransfer = new UserStepsTransfer(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()));
 
-        double initialBalance2 = createdAccount2.getBalance();
-        long createdAccountId2 = createdAccount2.getId();
+        CreateAccountResponse createdAccountFirst = userSteps.createAccount();
+        CreateAccountResponse createdAccountSecond = userSteps.createAccount();
+        userSteps.depositMaxMultipleTimes(createdAccountFirst.getAccountNumber(), 1);
 
-        TransferRequest transferRequest = TransferRequest.builder()
-                .senderAccountId(createdAccountId)
-                .receiverAccountId(createdAccountId2)
-                .amount(5000.01)
-                .build();
+        double currentBalanceFirst = userSteps.getAccountByNumber(createdAccountFirst.getAccountNumber()).getBalance();
+        double currentBalanceSecond = userSteps.getAccountByNumber(createdAccountSecond.getAccountNumber()).getBalance();
 
-        new TransferRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsBadRequest())
-                .post(transferRequest);
+        userStepsTransfer.transferInvalidAmount(createdAccountFirst.getId(), createdAccountSecond.getId(), transferSum);
 
-        List<AccountModel> accounts = new ReceiveAllUserAccountRequester(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
-                ResponseSpecs.requestReturnsOK())
-                .post(null)
-                .extract()
-                .jsonPath()
-                .getList(".", AccountModel.class);
-
-        AccountModel account1 = accounts.stream()
-                .filter(a -> a.getId() == createdAccountId)
-                .findFirst()
-                .orElse(null);
-
-        AccountModel account2 = accounts.stream()
-                .filter(a -> a.getId() == createdAccountId2)
-                .findFirst()
-                .orElse(null);
-
-        softly.assertThat(initialBalance).isEqualTo(account1.getBalance());
-        softly.assertThat(initialBalance2).isEqualTo(account2.getBalance());
+        assertThat(currentBalanceFirst).isEqualTo(userSteps.getAccountByNumber(createdAccountFirst.getAccountNumber()).getBalance());
+        assertThat(currentBalanceSecond).isEqualTo(userSteps.getAccountByNumber(createdAccountSecond.getAccountNumber()).getBalance());
     }
 }

@@ -45,7 +45,7 @@ Content-Type: application/json
 Authorization: Basic c2Vyb3phOlNlcm96YTEj
 
 {
-  "id": 1,
+  "id": 121,
   "balance": 4999.99
 }
 
@@ -95,7 +95,7 @@ Content-Type: application/json
 Authorization: Basic c2Vyb3phOlNlcm96YTEj
 
 {
-  "id": 1,
+  "id": 121,
   "balance": 1.0111111
 }
 
@@ -148,9 +148,9 @@ Content-Type: application/json
 Authorization: Basic c2Vyb3phOlNlcm96YTEj
 
 {
-  "senderAccountId": 1,
-  "receiverAccountId": 2,
-  "amount": 10000
+  "senderAccountId": 121,
+  "receiverAccountId": 122,
+  "amount": 1
 }
 
 ### Перевести на свой аккаунт валидну сумму (9999.99)
@@ -159,8 +159,8 @@ Content-Type: application/json
 Authorization: Basic c2Vyb3phOlNlcm96YTEj
 
 {
-  "senderAccountId": 1,
-  "receiverAccountId": 2,
+  "senderAccountId": 121,
+  "receiverAccountId": 122,
   "amount": 9999.99
 }
 

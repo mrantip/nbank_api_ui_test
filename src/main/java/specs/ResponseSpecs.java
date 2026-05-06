@@ -6,6 +6,11 @@ import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
 
 public class ResponseSpecs {
+
+    public static final String TRANSFER_SUCCESS_MESSAGE = "Transfer successful";
+    public static final String TRANSFER_INVALID_MESSAGE = "Invalid transfer: insufficient funds or invalid accounts";
+    public static final String UPDATE_PROFILE_SUCCESS_MESSAGE = "Profile updated successfully";
+
     private ResponseSpecs() {}
 
     private static ResponseSpecBuilder defaultResponseBuilder() {
@@ -21,6 +26,27 @@ public class ResponseSpecs {
     public static ResponseSpecification requestReturnsOK() {
         return defaultResponseBuilder()
                 .expectStatusCode(HttpStatus.SC_OK)
+                .build();
+    }
+
+    public static ResponseSpecification profileUpdatedSuccess() {
+        return defaultResponseBuilder()
+                .expectStatusCode(HttpStatus.SC_OK)
+                .expectBody("message", Matchers.equalTo(UPDATE_PROFILE_SUCCESS_MESSAGE))
+                .build();
+    }
+
+    public static ResponseSpecification transferSuccessful() {
+        return defaultResponseBuilder()
+                .expectStatusCode(HttpStatus.SC_OK)
+                .expectBody("message", Matchers.equalTo(TRANSFER_SUCCESS_MESSAGE))
+                .build();
+    }
+
+    public static ResponseSpecification transferUnsuccessful() {
+        return defaultResponseBuilder()
+                .expectStatusCode(HttpStatus.SC_BAD_REQUEST)
+                .expectBody("message", Matchers.equalTo(TRANSFER_INVALID_MESSAGE))
                 .build();
     }
 

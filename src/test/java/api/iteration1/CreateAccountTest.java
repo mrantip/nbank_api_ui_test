@@ -1,6 +1,6 @@
-package iteration1;
+package api.iteration1;
 
-import base.BaseTest;
+import api.base.BaseTest;
 import models.*;
 import org.junit.jupiter.api.Test;
 import requests.steps.AdminSteps;

@@ -1,6 +1,6 @@
-package iteration2;
+package api.iteration2;
 
-import base.BaseTest;
+import api.base.BaseTest;
 import models.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

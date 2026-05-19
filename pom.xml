@@ -23,6 +23,7 @@
         <jackson-annotations.version>2.21</jackson-annotations.version>
         <jackson-databind.version>2.21.2</jackson-databind.version>
         <rgxgen.version>1.3</rgxgen.version>
+        <selenide.version>7.16.0</selenide.version>
     </properties>
 
     <dependencies>
@@ -90,6 +91,11 @@
             <groupId>com.github.curious-odd-man</groupId>
             <artifactId>rgxgen</artifactId>
             <version>${rgxgen.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.codeborne</groupId>
+            <artifactId>selenide</artifactId>
+            <version>${selenide.version}</version>
         </dependency>
     </dependencies>
 

@@ -1,4 +1,4 @@
-package iteration2;
+package api.iteration2;
 
 import models.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -29,7 +29,7 @@ public class SetNameTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"Вася_Пупкин", "в_АсЯ3 пУп4@Кин", "вася", "Вася Пупкин Младший", " ", "а"})
-    public void setInvalidNameTest1(String name) {
+    public void setInvalidNameTest(String name) {
         CreateUserRequest userRequest = AdminSteps.createUser();
         UserStepsName userSteps = new UserStepsName(RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()));
 

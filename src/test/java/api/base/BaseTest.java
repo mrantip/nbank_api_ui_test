@@ -1,4 +1,4 @@
-package base;
+package api.base;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterEach;

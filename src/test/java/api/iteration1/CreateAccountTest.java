@@ -1,11 +1,13 @@
 package api.iteration1;
 
 import api.base.BaseTest;
-import models.*;
+import api.models.AccountModel;
+import api.models.CreateAccountResponse;
+import api.models.CreateUserRequest;
 import org.junit.jupiter.api.Test;
-import requests.steps.AdminSteps;
-import requests.steps.usersteps.UserSteps;
-import specs.RequestSpecs;
+import api.requests.steps.AdminSteps;
+import api.requests.steps.usersteps.UserSteps;
+import api.specs.RequestSpecs;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class SetNameTest extends BaseUiTest {
+    private static final String DEFAULT_USERNAME = "noname";
 
     @ParameterizedTest
     @ValueSource(strings = {"Вася Пупкин", "вАсЯ пУпКин", "ввввввввввввввввввв ааааааааааааааааааааааааааааааа"})
@@ -23,8 +24,8 @@ public class SetNameTest extends BaseUiTest {
         authAsUser(user);
         UserDashboard userDashboard = new UserDashboard().open();
 
-        assertEquals("noname", userDashboard.getWelcomeNameText());
-        assertEquals("noname", userDashboard.getNameChangeButtonText());
+        assertEquals(DEFAULT_USERNAME, userDashboard.getWelcomeNameText());
+        assertEquals(DEFAULT_USERNAME, userDashboard.getNameChangeButtonText());
 
         userDashboard.changeNameClick();
 
@@ -48,8 +49,8 @@ public class SetNameTest extends BaseUiTest {
         authAsUser(user);
         UserDashboard userDashboard = new UserDashboard().open();
 
-        assertEquals("noname", userDashboard.getWelcomeNameText());
-        assertEquals("noname", userDashboard.getNameChangeButtonText());
+        assertEquals(DEFAULT_USERNAME, userDashboard.getWelcomeNameText());
+        assertEquals(DEFAULT_USERNAME, userDashboard.getNameChangeButtonText());
 
         userDashboard.changeNameClick();
 

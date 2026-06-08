@@ -2,6 +2,7 @@ package ui.iteration2;
 
 import api.requests.steps.usersteps.UserSteps;
 import api.models.CreateUserRequest;
+import common.annotations.UserSession;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import api.requests.steps.AdminSteps;
@@ -9,6 +10,7 @@ import ui.BaseUiTest;
 import ui.pages.BankAlert;
 import ui.pages.EditProfile;
 import ui.pages.UserDashboard;
+import common.storage.SessionStorage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -18,10 +20,10 @@ public class SetNameTest extends BaseUiTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"Вася Пупкин", "вАсЯ пУпКин", "ввввввввввввввввввв ааааааааааааааааааааааааааааааа"})
+    @UserSession
     public void setValidNameTest(String newName) {
-        CreateUserRequest user = AdminSteps.createUser();
+        UserSteps userSteps = SessionStorage.getSteps();
 
-        authAsUser(user);
         UserDashboard userDashboard = new UserDashboard().open();
 
         assertEquals(DEFAULT_USERNAME, userDashboard.getWelcomeNameText());
@@ -38,15 +40,15 @@ public class SetNameTest extends BaseUiTest {
 
         assertEquals(newName, userDashboard.getWelcomeNameText());
         assertEquals(newName, userDashboard.getNameChangeButtonText());
-        assertEquals(newName, new UserSteps(user.getUsername(), user.getPassword()).getProfileInfo().getName());
+        assertEquals(newName, userSteps.getProfileInfo().getName());
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"", "Вася_Пупкин", "в_АсЯ3 пУп4@Кин", "вася", "Вася Пупкин Младший", " ", "а"})
+    @UserSession
     public void setInvalidNameTest(String newName) {
-        CreateUserRequest user = AdminSteps.createUser();
+        UserSteps userSteps = SessionStorage.getSteps();
 
-        authAsUser(user);
         UserDashboard userDashboard = new UserDashboard().open();
 
         assertEquals(DEFAULT_USERNAME, userDashboard.getWelcomeNameText());
@@ -63,6 +65,6 @@ public class SetNameTest extends BaseUiTest {
 
         assertNotEquals(newName, userDashboard.getWelcomeNameText());
         assertNotEquals(newName, userDashboard.getNameChangeButtonText());
-        assertNotEquals(newName, new UserSteps(user.getUsername(), user.getPassword()).getProfileInfo().getName());
+        assertNotEquals(newName, userSteps.getProfileInfo().getName());
     }
 }

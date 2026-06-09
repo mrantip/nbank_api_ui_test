@@ -9,7 +9,6 @@ import api.requests.steps.AdminSteps;
 import api.requests.steps.usersteps.UserStepsDeposit;
 import ui.BaseUiTest;
 import ui.pages.BankAlert;
-import ui.pages.MakeATransfer;
 import ui.pages.UserDashboard;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,15 +34,15 @@ public class TransferMoneyTest extends BaseUiTest {
         double initialBalanceFirst = userSteps.getAccountByNumber(createdAccountFirst.getAccountNumber()).getBalance();
         double initialBalanceSecond = userSteps.getAccountByNumber(createdAccountSecond.getAccountNumber()).getBalance();
 
-        UserDashboard userDashboard = new UserDashboard().open().makeATransfer();
-        new MakeATransfer().chooseAnAccount(accountFirst)
+        new UserDashboard().open()
+                .makeATransfer()
+                .chooseAnAccount(accountFirst)
                 .enterRecipientName("Gosha")
                 .enterRecipientAccountNumber(accountSecond)
                 .enterAmount(transfer)
                 .confirmDetailsAreCorrect()
-                .sendTransferClick();
-
-        userDashboard.checkAlertMessageAndAccept(BankAlert.SUCCESSFULLY_TRANSFERRED.format(transfer, accountSecond));
+                .sendTransferClick()
+                .checkAlertMessageAndAccept(BankAlert.SUCCESSFULLY_TRANSFERRED.format(transfer, accountSecond));
 
         assertThat(userSteps.getAccountByNumber(createdAccountFirst.getAccountNumber()).getBalance()).isNotEqualTo(initialBalanceFirst);
         assertThat(userSteps.getAccountByNumber(createdAccountSecond.getAccountNumber()).getBalance()).isNotEqualTo(initialBalanceSecond);
@@ -67,15 +66,15 @@ public class TransferMoneyTest extends BaseUiTest {
         double initialBalanceFirst = userSteps.getAccountByNumber(createdAccountFirst.getAccountNumber()).getBalance();
         double initialBalanceSecond = userSteps.getAccountByNumber(createdAccountSecond.getAccountNumber()).getBalance();
 
-        UserDashboard userDashboard = new UserDashboard().open().makeATransfer();
-        new MakeATransfer().chooseAnAccount(accountFirst)
+        new UserDashboard().open()
+                .makeATransfer()
+                .chooseAnAccount(accountFirst)
                 .enterRecipientName("Gosha")
                 .enterRecipientAccountNumber(accountSecond)
                 .enterAmount(transfer)
                 .confirmDetailsAreCorrect()
-                .sendTransferClick();
-
-        userDashboard.checkAlertMessageAndAccept(BankAlert.INVALID_TRANSFER.format(transfer, accountSecond));
+                .sendTransferClick()
+                .checkAlertMessageAndAccept(BankAlert.INVALID_TRANSFER.format(transfer, accountSecond));
 
         assertThat(userSteps.getAccountByNumber(createdAccountFirst.getAccountNumber()).getBalance()).isEqualTo(initialBalanceFirst);
         assertThat(userSteps.getAccountByNumber(createdAccountSecond.getAccountNumber()).getBalance()).isEqualTo(initialBalanceSecond);
@@ -92,10 +91,10 @@ public class TransferMoneyTest extends BaseUiTest {
 
         double initialBalanceFirst = userSteps.getAccountByNumber(createdAccountFirst.getAccountNumber()).getBalance();
 
-        UserDashboard userDashboard = new UserDashboard().open().makeATransfer();
-        new MakeATransfer().sendTransferClick();
-
-        userDashboard.checkAlertMessageAndAccept(BankAlert.NO_DATA_FOR_TRANSFER.getMessage());
+        new UserDashboard().open()
+                .makeATransfer()
+                .sendTransferClick()
+                .checkAlertMessageAndAccept(BankAlert.NO_DATA_FOR_TRANSFER.getMessage());
 
         assertThat(userSteps.getAccountByNumber(createdAccountFirst.getAccountNumber()).getBalance()).isEqualTo(initialBalanceFirst);
     }

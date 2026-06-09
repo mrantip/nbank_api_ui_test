@@ -11,7 +11,6 @@ import api.requests.steps.AdminSteps;
 import api.requests.steps.usersteps.UserStepsDeposit;
 import ui.BaseUiTest;
 import ui.pages.BankAlert;
-import ui.pages.DepositMoney;
 import ui.pages.UserDashboard;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,10 +29,13 @@ public class DepositMoneyTest extends BaseUiTest {
 
         String account = createdAccount.getAccountNumber();
 
-        UserDashboard userDashboard = new UserDashboard().open().depositMoney();
-        new DepositMoney().chooseAnAccount(account).enterAmount(deposit).depositClick();
-
-        userDashboard.checkAlertMessageAndAccept(BankAlert.SUCCESSFULLY_DEPOSITED.format(deposit, account));
+        new UserDashboard().open()
+                .depositMoney()
+                .chooseAnAccount(account)
+                .enterAmount(deposit)
+                .depositClick()
+                .andExpect()
+                .checkAlertMessageAndAccept(BankAlert.SUCCESSFULLY_DEPOSITED.format(deposit, account));
 
         AccountModel foundAccount = userSteps.getAccountByNumber(createdAccount.getAccountNumber());
         double expectedBalance = Double.parseDouble(deposit);
@@ -51,12 +53,15 @@ public class DepositMoneyTest extends BaseUiTest {
         CreateAccountResponse createdAccount = userSteps.createAccount();
 
         String account = createdAccount.getAccountNumber();
+        String actualAmount = "3";
 
-        UserDashboard userDashboard = new UserDashboard().open().depositMoney();
-        DepositMoney depositMoney = new DepositMoney().chooseAnAccount(account).enterAmountArrowUp(3).depositClick();
-        String actualAmount = depositMoney.getEnterAmount().getAttribute("value");
-
-        userDashboard.checkAlertMessageAndAccept(BankAlert.SUCCESSFULLY_DEPOSITED.format(actualAmount, account));
+        new UserDashboard().open()
+                .depositMoney()
+                .chooseAnAccount(account)
+                .enterAmountArrowUp(3)
+                .depositClick()
+                .andExpect()
+                .checkAlertMessageAndAccept(BankAlert.SUCCESSFULLY_DEPOSITED.format(actualAmount, account));
 
         AccountModel foundAccount = userSteps.getAccountByNumber(createdAccount.getAccountNumber());
         double expectedBalance = Double.parseDouble(actualAmount);
@@ -76,10 +81,13 @@ public class DepositMoneyTest extends BaseUiTest {
 
         String account = createdAccount.getAccountNumber();
 
-        UserDashboard userDashboard = new UserDashboard().open().depositMoney();
-        new DepositMoney().chooseAnAccount(account).enterAmount(deposit).depositClick();
-
-        userDashboard.checkAlertMessageAndAccept(BankAlert.DEPOSIT_LESS_OR_EQUAL_5000.getMessage());
+        new UserDashboard().open()
+                .depositMoney()
+                .chooseAnAccount(account)
+                .enterAmount(deposit)
+                .depositClick()
+                .andExpect()
+                .checkAlertMessageAndAccept(BankAlert.DEPOSIT_LESS_OR_EQUAL_5000.getMessage());
 
         AccountModel foundAccount = userSteps.getAccountByNumber(createdAccount.getAccountNumber());
         assertThat(foundAccount.getBalance()).isEqualTo(createdAccount.getBalance());
@@ -97,10 +105,13 @@ public class DepositMoneyTest extends BaseUiTest {
 
         String account = createdAccount.getAccountNumber();
 
-        UserDashboard userDashboard = new UserDashboard().open().depositMoney();
-        new DepositMoney().chooseAnAccount(account).enterAmount(deposit).depositClick();
-
-        userDashboard.checkAlertMessageAndAccept(BankAlert.INVALID_AMOUNT_DEPOSIT.getMessage());
+        new UserDashboard().open()
+                .depositMoney()
+                .chooseAnAccount(account)
+                .enterAmount(deposit)
+                .depositClick()
+                .andExpect()
+                .checkAlertMessageAndAccept(BankAlert.INVALID_AMOUNT_DEPOSIT.getMessage());
 
         AccountModel foundAccount = userSteps.getAccountByNumber(createdAccount.getAccountNumber());
         assertThat(foundAccount.getBalance()).isEqualTo(createdAccount.getBalance());
@@ -115,10 +126,11 @@ public class DepositMoneyTest extends BaseUiTest {
 
         CreateAccountResponse createdAccount = userSteps.createAccount();
 
-        UserDashboard userDashboard = new UserDashboard().open().depositMoney();
-        new DepositMoney().depositClick();
-
-        userDashboard.checkAlertMessageAndAccept(BankAlert.NO_ACCOUNT_DEPOSIT.getMessage());
+        new UserDashboard().open()
+                .depositMoney()
+                .depositClick()
+                .andExpect()
+                .checkAlertMessageAndAccept(BankAlert.NO_ACCOUNT_DEPOSIT.getMessage());
 
         AccountModel foundAccount = userSteps.getAccountByNumber(createdAccount.getAccountNumber());
         assertThat(foundAccount.getBalance()).isEqualTo(createdAccount.getBalance());

@@ -24,14 +24,14 @@ public class UserDashboard extends BasePage<UserDashboard> {
         return this;
     }
 
-    public UserDashboard depositMoney() {
+    public DepositMoney  depositMoney() {
         depositMoney.click();
-        return this;
+        return new DepositMoney();
     }
 
-    public UserDashboard makeATransfer() {
+    public MakeATransfer makeATransfer() {
         makeATransfer.click();
-        return this;
+        return new MakeATransfer();
     }
 
     public String getWelcomeNameText() {
@@ -42,8 +42,8 @@ public class UserDashboard extends BasePage<UserDashboard> {
         return nameChangeButton.text().toLowerCase();
     }
 
-    public UserDashboard changeNameClick() {
+    public EditProfile changeNameClick() {
         nameChangeButton.click();
-        return this;
+        return new EditProfile();
     }
 }

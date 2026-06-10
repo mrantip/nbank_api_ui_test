@@ -17,13 +17,15 @@ public class UserStepsWithAccountAndDeposit {
     private final UserSteps steps;
     private final CreateAccountResponse account;
     private final UserStepsDeposit depositSteps;
-    private final List<DepositResponse> deposits;
+    private final List<Double> depositAmounts;  // храним только суммы
+    private final List<DepositResponse> depositResponses;
 
     public UserStepsWithAccountAndDeposit(Builder builder) {
         this.steps = builder.steps;
         this.depositSteps = builder.depositSteps;
         this.account = builder.account;
-        this.deposits = builder.deposits != null ? builder.deposits : new ArrayList<>();
+        this.depositAmounts = builder.depositAmounts != null ? builder.depositAmounts : new ArrayList<>();
+        this.depositResponses = builder.depositResponses != null ? builder.depositResponses : new ArrayList<>();
     }
 
     public String getAccountNumber() {
@@ -49,21 +51,21 @@ public class UserStepsWithAccountAndDeposit {
 
     // Работа с депозитами
     public boolean hasDeposits() {
-        return !deposits.isEmpty();
+        return !depositResponses.isEmpty();
     }
 
     public int getDepositCount() {
-        return deposits.size();
+        return depositAmounts.size();
     }
 
     public double getTotalDeposited() {
-        return deposits.stream()
-                .mapToDouble(DepositResponse::getBalance)
+        return depositAmounts.stream()
+                .mapToDouble(Double::doubleValue)
                 .sum();
     }
 
     public DepositResponse getLastDeposit() {
-        return deposits.isEmpty() ? null : deposits.get(deposits.size() - 1);
+        return depositResponses.isEmpty() ? null : depositResponses.get(depositResponses.size() - 1);
     }
 
 
@@ -73,17 +75,15 @@ public class UserStepsWithAccountAndDeposit {
             throw new IllegalStateException("Нельзя внести депозит, т.к. не создан аккаунт");
         }
         DepositResponse response = depositSteps.deposit(getAccountNumber(), amount);
-        deposits.add(response);
+        depositAmounts.add(amount);
+        depositResponses.add(response);
         return response;
     }
 
-    public void depositMaxMultipleTimes(int times) {
-        if (account == null) {
-            throw new IllegalStateException("Нельзя внести депозит, т.к. не создан аккаунт");
+    public void depositMultiple(int count, double amount) {
+        for (int i = 0; i < count; i++) {
+            deposit(amount);
         }
-        depositSteps.depositMaxMultipleTimes(account.getAccountNumber(), times);
-        // Обновляем список депозитов (нужно, если depositMaxMultipleTimes не возвращает список)
-        // В идеале - доработать UserStepsDeposit чтобы возвращал список
     }
 
     public static Builder builder() {
@@ -94,7 +94,8 @@ public class UserStepsWithAccountAndDeposit {
         private UserSteps steps;
         private UserStepsDeposit depositSteps;
         private CreateAccountResponse account;
-        private List<DepositResponse> deposits;
+        private List<Double> depositAmounts;
+        private List<DepositResponse> depositResponses;
 
         public Builder steps(UserSteps steps) {
             this.steps = steps;
@@ -102,7 +103,6 @@ public class UserStepsWithAccountAndDeposit {
         }
 
         // Создаем билдер
-
         public Builder depositSteps(UserStepsDeposit depositSteps) {
             this.depositSteps = depositSteps;
             return this;
@@ -113,16 +113,29 @@ public class UserStepsWithAccountAndDeposit {
             return this;
         }
 
-        public Builder deposits(List<DepositResponse> deposits) {
-            this.deposits = deposits;
+        public Builder depositAmounts(List<Double> depositAmounts) {
+            this.depositAmounts = depositAmounts;
             return this;
         }
 
-        public Builder addDeposit(DepositResponse deposit) {
-            if (this.deposits == null) {
-                this.deposits = new ArrayList<>();
+        public Builder depositResponses(List<DepositResponse> depositResponses) {
+            this.depositResponses = depositResponses;
+            return this;
+        }
+
+        public Builder addDepositAmount(double amount) {
+            if (this.depositAmounts == null) {
+                this.depositAmounts = new ArrayList<>();
             }
-            this.deposits.add(deposit);
+            this.depositAmounts.add(amount);
+            return this;
+        }
+
+        public Builder addDepositResponse(DepositResponse response) {
+            if (this.depositResponses == null) {
+                this.depositResponses = new ArrayList<>();
+            }
+            this.depositResponses.add(response);
             return this;
         }
 
@@ -130,5 +143,4 @@ public class UserStepsWithAccountAndDeposit {
             return new UserStepsWithAccountAndDeposit(this);
         }
     }
-
 }

@@ -4,6 +4,7 @@ import api.models.CreateAccountResponse;
 import api.models.CreateUserRequest;
 import api.requests.steps.AdminSteps;
 import api.requests.steps.usersteps.UserSteps;
+import common.context.UserStepsWithAccountAndDeposit;
 import common.storage.SessionStorage;
 import common.annotations.UserSession;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -25,6 +26,8 @@ public class UserSessionExtension implements BeforeEachCallback {
             boolean withAccount = annotation.withAccount();
             boolean withAccountForAll = annotation.withAccountForAll();
             boolean withDeposit = annotation.withDeposit();
+            int depositCount = annotation.depositCount();
+            double depositAmount = annotation.depositAmount();
 
             SessionStorage.clear();
 
@@ -54,6 +57,7 @@ public class UserSessionExtension implements BeforeEachCallback {
                 }
             }
 
+            //авторизация текущего пользователя
             CreateUserRequest authUser = SessionStorage.getUser(authAsUser);
             BasePage.authAsUser(authUser);
             SessionStorage.setCurrentUser(authAsUser);
@@ -65,10 +69,20 @@ public class UserSessionExtension implements BeforeEachCallback {
                 SessionStorage.addAccountForCurrentUser(account);
             }
 
-//            if (withDeposit) {
-//                UserStepsDeposit userStepsDeposit = SessionStorage.getSteps();
-//
-//            }
+            if (withDeposit) {
+                // проверка, что есть аккаунт
+                if (!SessionStorage.currentUserHasAccount()) {
+                    throw new IllegalStateException(
+                            "Нельзя внести депозит, т.к. нет аккаунта. Используй аннотации withAccount=true или withAccountForAll=true"
+                    );
+                }
+                // получаем текущего пользователя и вносим депозит
+                UserStepsWithAccountAndDeposit context = SessionStorage.getCurrentContext();
+                for (int i = 0; i < depositCount; i++) {
+                    context.deposit(depositAmount);
+                }
+
+            }
         }
     }
 }

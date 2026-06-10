@@ -15,5 +15,4 @@ public @interface UserSession {
     boolean withDeposit() default false;      // делать ли депозиты
     int depositCount() default 3;             // количество депозитов (по умолчанию 3)
     double depositAmount() default 5000.0;    // сумма депозита (по умолчанию максимальная)
-    boolean depositForAll() default false;    // делать депозиты для всех пользователей или только для текущего
 }

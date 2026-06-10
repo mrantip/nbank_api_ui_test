@@ -13,23 +13,15 @@ import java.util.List;
 
 public class SessionStorage {
     private static final SessionStorage INSTANCE = new SessionStorage();
-//
-//    private final LinkedHashMap<CreateUserRequest, UserSteps> userStepsMap = new LinkedHashMap<>();
-//
-//    private final LinkedHashMap<CreateUserRequest, CreateAccountResponse> userAccountMap = new LinkedHashMap<>();
-//
-//    private final LinkedHashMap<CreateUserRequest, UserStepsDeposit> userStepsDepositMap = new LinkedHashMap<>();
-//    private final LinkedHashMap<CreateUserRequest, List<DepositResponse>> userDepositsMap = new LinkedHashMap<>();
-//
     private final LinkedHashMap<CreateUserRequest, UserStepsWithAccountAndDeposit> userContextMap = new LinkedHashMap<>();
-
     private CreateUserRequest currentUser = null;
     private int currentUserIndex = 1;
 
-    private SessionStorage() {}
+    private SessionStorage() {
+    }
 
     public static void addUsers(List<CreateUserRequest> users) {
-        for (CreateUserRequest user: users) {
+        for (CreateUserRequest user : users) {
             UserSteps steps = new UserSteps(user.getUsername(), user.getPassword());
             UserStepsDeposit depositSteps = UserStepsDeposit.asUser(user);
 
@@ -49,21 +41,21 @@ public class SessionStorage {
 
     /**
      * Возвращаем объект CreateUserRequest по его порядковому номеру в списке созданных пользователей.
+     *
      * @param number Порядковый номер, начиная с 1 (а не с 0).
      * @return Объект CreateUserRequest, соответствующий указанному порядковому номеру.
      */
     public static CreateUserRequest getUser(int number) {
-        return new ArrayList<>(INSTANCE.userContextMap.keySet()).get(number-1);
+        return new ArrayList<>(INSTANCE.userContextMap.keySet()).get(number - 1);
     }
 
     public static CreateUserRequest getUser() {
         return INSTANCE.currentUser != null ? INSTANCE.currentUser : getUser(1);
     }
 
-
-
     /**
      * Возвращаем объект UserStepsWithAccountAndDeposit по его порядковому номеру в списке созданных пользователей. Получаем контекст (модель данных для теста)
+     *
      * @param number Порядковый номер
      * @return Объект CreateUserRequest, соответствующий указанному порядковому номеру.
      */
@@ -77,31 +69,25 @@ public class SessionStorage {
         return getContext(getCurrentUserIndex());
     }
 
-
-
-//    public static int getCurrentUserIndex() {
-//        return INSTANCE.currentUserIndex;
-//    }
-//
-//    public static void setCurrentUser(int number) {
-//        INSTANCE.currentUser = getUser(number);
-//        INSTANCE.currentUserIndex = number;
-//    }
-
     /**
      * Добавляет аккаунт для указанного пользователя
+     *
      * @param userIndex Порядковый номер пользователя (начиная с 1)
-     * @param account Аккаунт пользователя
+     * @param account   Аккаунт пользователя
      */
     public static void addAccountForUser(int userIndex, CreateAccountResponse account) {
         UserStepsWithAccountAndDeposit context = getContext(userIndex);
 
         // сохраняем существующие депозиты
+        List<Double> existingAmounts = context.getDepositAmounts();
+        List<DepositResponse> existingResponses = context.getDepositResponses();
+
         UserStepsWithAccountAndDeposit newContext = UserStepsWithAccountAndDeposit.builder()
                 .steps(context.getSteps())
                 .depositSteps(context.getDepositSteps())
                 .account(account)
-                .deposits(context.getDeposits())  // ✅ Сохраняем депозиты
+                .depositAmounts(existingAmounts)    // ✅ Сохраняем суммы
+                .depositResponses(existingResponses)  // ✅ Сохраняем депозиты
                 .build();
 
         CreateUserRequest user = getUser(userIndex);
@@ -131,86 +117,37 @@ public class SessionStorage {
         return account != null ? account.getAccountNumber() : null;
     }
 
-//    public static boolean hasAccountForUser(int userIndex) {
-//        return getContext(userIndex).hasAccount();
-//    }
-//
-//    public static boolean currentUserHasAccount() {
-//        return getContext().hasAccount();
-//    }
+    public static boolean currentUserHasAccount() {
+        return getContext().hasAccount();
+    }
 
+    public static void addDepositForCurrentUser(double amount) {
+        if (INSTANCE.currentUser != null) {
+            addDepositForUser(getCurrentUserIndex(), amount);
+        }
+    }
 
-
-
-
-//    /**
-//     * Получает UserSteps и аккаунт для текущего пользователя
-//     */
-//    public static UserStepsWithAccount getCurrentUserWithAccount() {
-//        UserSteps steps = getSteps();
-//        CreateAccountResponse account = getCurrentAccount();
-//        return new UserStepsWithAccount(steps, account);
-//    }
-//
-//    public static UserStepsDeposit getDepositSteps(int number) {
-//        return new ArrayList<>(INSTANCE.userStepsDepositMap.values()).get(number - 1);
-//    }
-
-    //Работа с депозитами
-    public static void addDepositForUser(int userIndex, DepositResponse deposit) {
+    public static void addDepositForUser(int userIndex, double amount) {
         UserStepsWithAccountAndDeposit context = getContext(userIndex);
 
-        // сохраняем существующие депозиты и добавляем новый
-        List<DepositResponse> existingDeposits = context.getDeposits();
-        List<DepositResponse> newDeposits = new ArrayList<>(existingDeposits);
-        newDeposits.add(deposit);
+        // Делаем депозит через контекст
+        DepositResponse response = context.deposit(amount);
+
+        List<Double> existingAmounts = context.getDepositAmounts();
+        List<DepositResponse> existingResponses = context.getDepositResponses();
 
         UserStepsWithAccountAndDeposit newContext = UserStepsWithAccountAndDeposit.builder()
                 .steps(context.getSteps())
                 .depositSteps(context.getDepositSteps())
                 .account(context.getAccount())
-                .deposits(newDeposits)
+                .depositAmounts(existingAmounts)
+                .depositResponses(existingResponses)
                 .build();
 
         CreateUserRequest user = getUser(userIndex);
         INSTANCE.userContextMap.put(user, newContext);
     }
 
-    public static void addDepositForCurrentUser(DepositResponse deposit) {
-        if (INSTANCE.currentUser != null) {
-            addDepositForUser(getCurrentUserIndex(), deposit);
-        }
-    }
-
-    public static List<DepositResponse> getDepositsForUser(int userIndex) {
-        return getContext(userIndex).getDeposits();
-    }
-
-    public static List<DepositResponse> getCurrentUserDeposits() {
-        return getContext().getDeposits();
-    }
-
-    public static double getTotalDepositedForUser(int userIndex) {
-        return getDepositsForUser(userIndex).stream()
-                .mapToDouble(DepositResponse::getBalance)
-                .sum();
-    }
-
-    public static double getCurrentUserTotalDeposited() {
-        return getCurrentUserDeposits().stream()
-                .mapToDouble(DepositResponse::getBalance)
-                .sum();
-    }
-
-    public static int getDepositCountForUser(int userIndex) {
-        return getContext(userIndex).getDepositCount();
-    }
-
-    public static int getCurrentUserDepositCount() {
-        return getContext().getDepositCount();
-    }
-
-    // Сохраняем старые методы для обратной совместимости
     public static UserSteps getSteps(int number) {
         return getContext(number).getSteps();
     }
@@ -239,35 +176,6 @@ public class SessionStorage {
         return getContext(userIndex);
     }
 
-    // Для обратной совместимости со старыми тестами
-    public static UserStepsWithAccountAndDeposit getUserWithAccount(int userIndex) {
-        return getContext(userIndex);
-    }
-
-    public static UserStepsWithAccountAndDeposit getCurrentUserWithAccount() {
-        return getContext();
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // Очистка
-    public static void clear() {
-        INSTANCE.userContextMap.clear();
-        INSTANCE.currentUser = null;
-        INSTANCE.currentUserIndex = 1;
-    }
-
     public static int getCurrentUserIndex() {
         return INSTANCE.currentUserIndex;
     }
@@ -275,5 +183,12 @@ public class SessionStorage {
     public static void setCurrentUser(int number) {
         INSTANCE.currentUser = getUser(number);
         INSTANCE.currentUserIndex = number;
+    }
+
+    // Очистка
+    public static void clear() {
+        INSTANCE.userContextMap.clear();
+        INSTANCE.currentUser = null;
+        INSTANCE.currentUserIndex = 1;
     }
 }

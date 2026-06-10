@@ -1,14 +1,11 @@
 package ui.iteration2;
 
 import api.requests.steps.usersteps.UserSteps;
-import api.models.CreateUserRequest;
 import common.annotations.UserSession;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import api.requests.steps.AdminSteps;
 import ui.BaseUiTest;
 import ui.pages.BankAlert;
-import ui.pages.EditProfile;
 import ui.pages.UserDashboard;
 import common.storage.SessionStorage;
 
@@ -29,14 +26,11 @@ public class SetNameTest extends BaseUiTest {
         assertEquals(DEFAULT_USERNAME, userDashboard.getWelcomeNameText());
         assertEquals(DEFAULT_USERNAME, userDashboard.getNameChangeButtonText());
 
-        userDashboard.changeNameClick();
-
-        EditProfile editProfile = new EditProfile().enterNewName(newName)
-                .saveChangesButtonClick();
-
-        userDashboard.checkAlertMessageAndAccept(BankAlert.NAME_UPDATED_SUCCESSFULLY.getMessage());
-
-        editProfile.goHome();
+        userDashboard.changeNameClick()
+                .enterNewName(newName)
+                .saveChangesButtonClick()
+                .checkAlertMessageAndAccept(BankAlert.NAME_UPDATED_SUCCESSFULLY.getMessage())
+                .goHome();
 
         assertEquals(newName, userDashboard.getWelcomeNameText());
         assertEquals(newName, userDashboard.getNameChangeButtonText());
@@ -54,14 +48,11 @@ public class SetNameTest extends BaseUiTest {
         assertEquals(DEFAULT_USERNAME, userDashboard.getWelcomeNameText());
         assertEquals(DEFAULT_USERNAME, userDashboard.getNameChangeButtonText());
 
-        userDashboard.changeNameClick();
-
-        EditProfile editProfile = new EditProfile().enterNewName(newName)
-                .saveChangesButtonClick();
-
-        userDashboard.checkAlertMessageAndAccept(BankAlert.NAME_INVALID.getMessage());
-
-        editProfile.goHome();
+        userDashboard.changeNameClick()
+                .enterNewName(newName)
+                .saveChangesButtonClick()
+                .checkAlertMessageAndAccept(BankAlert.NAME_INVALID.getMessage())
+                .goHome();
 
         assertNotEquals(newName, userDashboard.getWelcomeNameText());
         assertNotEquals(newName, userDashboard.getNameChangeButtonText());

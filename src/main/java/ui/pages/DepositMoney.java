@@ -37,9 +37,15 @@ public class DepositMoney extends BasePage<DepositMoney> {
         return this;
     }
 
-    public DepositMoney depositClick() {
+    public DepositResult depositClick() {
         depositButton.click();
-        return this;
+        return new DepositResult();
+    }
+
+    public class DepositResult {
+        public UserDashboard andExpect() {
+            return new UserDashboard();
+        }
     }
 
     public DepositMoney enterAmountArrowUp(int amountPress) {

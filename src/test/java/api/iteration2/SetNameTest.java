@@ -1,11 +1,12 @@
 package api.iteration2;
 
-import models.*;
+import api.models.ChangeNameResponse;
+import api.models.CreateUserRequest;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import requests.steps.AdminSteps;
-import requests.steps.usersteps.UserStepsName;
-import specs.RequestSpecs;
+import api.requests.steps.AdminSteps;
+import api.requests.steps.usersteps.UserStepsName;
+import api.specs.RequestSpecs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;

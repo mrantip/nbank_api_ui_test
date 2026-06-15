@@ -1,16 +1,17 @@
 package api.iteration2;
 
 import api.base.BaseTest;
-import models.*;
+import api.models.CreateAccountResponse;
+import api.models.CreateUserRequest;
+import api.models.TransferResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import requests.*;
-import requests.steps.AdminSteps;
-import requests.steps.usersteps.UserSteps;
-import requests.steps.usersteps.UserStepsDeposit;
-import requests.steps.usersteps.UserStepsTransfer;
-import specs.RequestSpecs;
+import api.requests.steps.AdminSteps;
+import api.requests.steps.usersteps.UserSteps;
+import api.requests.steps.usersteps.UserStepsDeposit;
+import api.requests.steps.usersteps.UserStepsTransfer;
+import api.specs.RequestSpecs;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

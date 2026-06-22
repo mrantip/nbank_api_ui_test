@@ -4,6 +4,7 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.Selectors;
 import com.codeborne.selenide.SelenideElement;
 import com.codeborne.selenide.WebDriverRunner;
+import common.utils.RetryUtils;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -27,20 +28,24 @@ public class EditProfile extends BasePage<EditProfile> {
                 .doubleClick()
                 .sendKeys(Keys.DELETE);
         enterNewName.sendKeys(newName);
-        sleep(500);
+        RetryUtils.retry(
+                () -> enterNewName.getValue(),
+                value -> value.equals(newName),
+                3,
+                1000
+        );
 //        enterNewName.shouldHave(Condition.value(newName));
         return this;
     }
 
     public EditProfile saveChangesButtonClick() {
         saveChangesButton.click();
-        WebDriverWait wait = new WebDriverWait(WebDriverRunner.getWebDriver(), Duration.ofSeconds(5));
         return this;
     }
 
     public EditProfile goHome() {
         homeButton.click();
-        sleep(1000);
+        sleep(200);
         return this;
     }
 }

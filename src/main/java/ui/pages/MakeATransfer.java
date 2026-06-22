@@ -3,9 +3,9 @@ package ui.pages;
 import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.Selectors;
 import com.codeborne.selenide.SelenideElement;
+import common.utils.RetryUtils;
 
-import static com.codeborne.selenide.Selenide.$;
-import static com.codeborne.selenide.Selenide.$$;
+import static com.codeborne.selenide.Selenide.*;
 
 public class MakeATransfer extends BasePage<MakeATransfer> {
     private SelenideElement chooseAnAccount = $(Selectors.byCssSelector("select.form-control.account-selector"));
@@ -21,13 +21,19 @@ public class MakeATransfer extends BasePage<MakeATransfer> {
     }
 
     public MakeATransfer chooseAnAccount(String account) {
-        chooseAnAccount.click();
-        SelenideElement targetOption = $$("option")
-                .findBy(Condition.text(account));
-        targetOption.shouldBe(Condition.visible)
-                .shouldHave(Condition.text(account));
-        targetOption.click();
+        chooseAnAccount.shouldBe(Condition.enabled, Condition.visible).click();
+
+        // XPath поиск по точному тексту
+        SelenideElement targetOption = RetryUtils.retry(
+                () -> $x(String.format("//option[contains(text(), '%s')]", account)),
+                element -> element.isDisplayed() && element.isEnabled(),
+                5,
+                500
+        );
+
+        targetOption.shouldBe(Condition.visible, Condition.enabled).click();
         targetOption.shouldBe(Condition.selected);
+
         return this;
     }
 

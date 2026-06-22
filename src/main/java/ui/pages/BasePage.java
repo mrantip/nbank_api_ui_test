@@ -7,6 +7,7 @@ import com.codeborne.selenide.Selectors;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
 import org.openqa.selenium.Alert;
+import org.openqa.selenium.NoAlertPresentException;
 import ui.elements.BaseElement;
 
 import java.util.List;
@@ -41,6 +42,9 @@ public abstract class BasePage<T extends BasePage> {
             } catch (Exception ignored) {
             }
             throw e;
+        }
+        catch (NoAlertPresentException e) {
+            throw new AssertionError("Expected alert with message: " + bankAlert + ", but no alert present");
         }
         return (T) this;
     }

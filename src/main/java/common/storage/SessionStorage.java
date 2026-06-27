@@ -12,7 +12,18 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 public class SessionStorage {
-    private static final SessionStorage INSTANCE = new SessionStorage();
+    /* Thread Local - способ сделать SessionStorage потокобезопасным
+
+   Каждый поток обращаясь к INSTANCE.get() получают свою КОПИЮ
+
+   Map<Thread, SessionStorage>
+
+   Тест1 : создал юзеров, положил в SessionStorage (СВОЯ КОПИЯ1), работает с ними
+   Тест2 : создал юзеров, положил в SessionStorage (СВОЯ КОПИЯ2), работает с ними
+   Тест3 : создал юзеров, положил в SessionStorage (СВОЯ КОПИЯ3), работает с ними
+    */
+    private static final ThreadLocal<SessionStorage> INSTANCE = ThreadLocal.withInitial(SessionStorage::new);
+
     private final LinkedHashMap<CreateUserRequest, UserStepsWithAccountAndDeposit> userContextMap = new LinkedHashMap<>();
     private CreateUserRequest currentUser = null;
     private int currentUserIndex = 1;
@@ -30,12 +41,12 @@ public class SessionStorage {
                     .depositSteps(depositSteps)
                     .build();
 
-            INSTANCE.userContextMap.put(user, context);
+            INSTANCE.get().userContextMap.put(user, context);
         }
         // Устанавливаем текущего пользователя (первого)
         if (!users.isEmpty()) {
-            INSTANCE.currentUser = users.get(0);
-            INSTANCE.currentUserIndex = 1;
+            INSTANCE.get().currentUser = users.get(0);
+            INSTANCE.get().currentUserIndex = 1;
         }
     }
 
@@ -46,11 +57,11 @@ public class SessionStorage {
      * @return Объект CreateUserRequest, соответствующий указанному порядковому номеру.
      */
     public static CreateUserRequest getUser(int number) {
-        return new ArrayList<>(INSTANCE.userContextMap.keySet()).get(number - 1);
+        return new ArrayList<>(INSTANCE.get().userContextMap.keySet()).get(number - 1);
     }
 
     public static CreateUserRequest getUser() {
-        return INSTANCE.currentUser != null ? INSTANCE.currentUser : getUser(1);
+        return INSTANCE.get().currentUser != null ? INSTANCE.get().currentUser : getUser(1);
     }
 
     /**
@@ -62,7 +73,7 @@ public class SessionStorage {
 
     public static UserStepsWithAccountAndDeposit getContext(int number) {
         CreateUserRequest user = getUser(number);
-        return INSTANCE.userContextMap.get(user);
+        return INSTANCE.get().userContextMap.get(user);
     }
 
     public static UserStepsWithAccountAndDeposit getContext() {
@@ -91,14 +102,14 @@ public class SessionStorage {
                 .build();
 
         CreateUserRequest user = getUser(userIndex);
-        INSTANCE.userContextMap.put(user, newContext);
+        INSTANCE.get().userContextMap.put(user, newContext);
     }
 
     /**
      * Добавляет аккаунт для текущего пользователя
      */
     public static void addAccountForCurrentUser(CreateAccountResponse account) {
-        if (INSTANCE.currentUser != null) {
+        if (INSTANCE.get().currentUser != null) {
             addAccountForUser(getCurrentUserIndex(), account);
         }
     }
@@ -122,7 +133,7 @@ public class SessionStorage {
     }
 
     public static void addDepositForCurrentUser(double amount) {
-        if (INSTANCE.currentUser != null) {
+        if (INSTANCE.get().currentUser != null) {
             addDepositForUser(getCurrentUserIndex(), amount);
         }
     }
@@ -145,7 +156,7 @@ public class SessionStorage {
                 .build();
 
         CreateUserRequest user = getUser(userIndex);
-        INSTANCE.userContextMap.put(user, newContext);
+        INSTANCE.get().userContextMap.put(user, newContext);
     }
 
     public static UserSteps getSteps(int number) {
@@ -177,18 +188,18 @@ public class SessionStorage {
     }
 
     public static int getCurrentUserIndex() {
-        return INSTANCE.currentUserIndex;
+        return INSTANCE.get().currentUserIndex;
     }
 
     public static void setCurrentUser(int number) {
-        INSTANCE.currentUser = getUser(number);
-        INSTANCE.currentUserIndex = number;
+        INSTANCE.get().currentUser = getUser(number);
+        INSTANCE.get().currentUserIndex = number;
     }
 
     // Очистка
     public static void clear() {
-        INSTANCE.userContextMap.clear();
-        INSTANCE.currentUser = null;
-        INSTANCE.currentUserIndex = 1;
+        INSTANCE.get().userContextMap.clear();
+        INSTANCE.get().currentUser = null;
+        INSTANCE.get().currentUserIndex = 1;
     }
 }
